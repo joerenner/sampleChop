@@ -3,6 +3,7 @@
 This python project trains a neural network to divide samples for the purpose of chopping https://en.wikipedia.org/wiki/Chopping_(sampling_technique) for the aide of hip hop production. 
 
 Process:
+
 I framed the problem as a binary classification sample: For each frame of an audio file, it would be positive if it was a good break point for a chop, and negative otherwise.
 I spent a large amount of time chopping samples by hand and recording where in a wav file I chopped.
 Then, I created a script to turn the raw data (audio file, text file with times) into data features and labels.
