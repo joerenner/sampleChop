@@ -27,4 +27,5 @@ Files:
 Future work: 
 - Create website for this using classify.py as backend. Possibly using Django framework
 - Introduce greedy filtering algorithm on positive samples, to introduce trade-off between chop diversity and chop confidence
+  - UPDATE: done
 - Find way to use with mp3s and not just wav audio files
