@@ -29,7 +29,8 @@ def classify(cqt):
             prob.append(pred[0][1])
     return times, prob
 
-# function to clean up times: aggregate chops that are close to eachother
+# function to clean up times: aggregate chops that are close to eachother, return highest probability chops
+# input: list of positive times, probability of these times, number of final chops to send
 def clean_times(times, prob, num):
     new_times = []
     new_prob = []
@@ -56,14 +57,18 @@ def clean_times(times, prob, num):
     if worker:
         new_times.append(np.mean(worker))
         new_prob.append(np.mean(workerpb))
-
-    new_times_probs = sorted(zip(new_times,new_prob), key=lambda pair: pair[1], reverse=True)
-    return new_times_probs[0:num-1]
+    if len(new_times) < num:
+        return zip(new_times, new_prob)
+    else:
+        new_times_probs = sorted(zip(new_times,new_prob), key=lambda pair: pair[1], reverse=True)
+        return new_times_probs[0:num-1]
 
 # greedy algorithm. Selects samples that maximize probability and diversity function
-# input: cqt (used for diversity function), sample times and probabilities, and number of samples wanted
+# input: cqt (used for diversity function), sample times and probabilities, number of samples wanted, lambda trade-off
 # output: final set of  chop frames
-def max_avg_diversity(cqt, frames_prob, n):
+def max_avg_diversity(cqt, frames_prob, n, lamb):
+    if len(frames_prob) <= n:
+        return [i[0] for i in frames_prob]
     H, P = lb.decompose.hpss(cqt)
     distances = make_dist_dict(H, frames_prob)
     prob = [i[1] for i in frames_prob]
@@ -74,7 +79,7 @@ def max_avg_diversity(cqt, frames_prob, n):
         max_i = 0
         max_val = 0.0
         for i in range(0, len(frames_prob)):
-            score = frames_prob[i][1] + diversity(distances, frames_prob[i][0], F)
+            score = ((1 - lamb) * frames_prob[i][1]) + (lamb * diversity(distances, frames_prob[i][0], F))
             if score > max_val:
                 max_val = score
                 max_i = i
@@ -87,10 +92,19 @@ def max_avg_diversity(cqt, frames_prob, n):
 # input: Harmonic cqt, frames and probabilites
 def make_dist_dict(H, frames_prob):
     dist = {}
+    max_dist = 0        # used for scaling distances between 0 and 1
     for i in xrange(len(frames_prob)-1):
         dist[str(frames_prob[i][0])] = {}
         for j in range(i+1, len(frames_prob)):
-            dist[str(frames_prob[i][0])][str(frames_prob[j][0])] = euclidean(H[:,frames_prob[i][0]],H[:,frames_prob[j][0]])
+            distance = euclidean(H[:,frames_prob[i][0]],H[:,frames_prob[j][0]])
+            dist[str(frames_prob[i][0])][str(frames_prob[j][0])] = distance
+            if distance > max_dist:
+                max_dist = distance
+    # scaling distances down to same and probability scaling
+    for start in dist:
+        for end in dist[start]:
+            dist[start][end] = float(dist[start][end]) / max_dist
+
     return dist
 
 # diversity function: measures average distance from candidate frame to all frames already picked
@@ -116,16 +130,26 @@ def write_samples(y, sample_rate, samples_prefix, samples):
     lb.output.write_wav(samples_prefix + str(len(samples) + 1) + ".wav", y[samples[len(samples)-1]:], sr=sample_rate)
     return
 
+# driver
 def main():
-    f = 'finishedsamples/02 - 21St Century - The Way We Were 1.wav'
+    # wav file path
+    f = '..\The Yeezus Special Sample 18.wav'
+    # loading audio
     y, sample_rate = lb.load(f, sr=sr)
+    # get spetrogram
     cqt = np.abs(lb.core.cqt(y, sr=sample_rate, fmin=lb.note_to_hz('F2'),
                              n_bins=48, hop_length=hp_len, norm=2, real=False))
+    # classify using neural network
     times, prob = classify(cqt)
+    # return cleaned, most probable chop times
     time_probs = clean_times(times, prob, 10)
+    # convert times to frame numbers
     frames = lb.core.time_to_frames([i[0] for i in time_probs], sr=sample_rate, hop_length=hp_len)
+    # arrange frames with probabilities in chronological order
     frames_prob = sorted(zip(frames, [i[1] for i in time_probs]), key=lambda pair:pair[0])
-    final_frames = sorted(max_avg_diversity(cqt, frames_prob, 5))
+    # run greedy diversification algorithm to get chop frames
+    final_frames = sorted(max_avg_diversity(cqt, frames_prob, 5, lamb=0.5))
+    # take frame numbers, divide song, and create wav chops
     write_samples(y, sample_rate, 'sample', lb.core.frames_to_samples(final_frames, hop_length=hp_len))
 
 if __name__ == '__main__':
