@@ -136,9 +136,10 @@ def write_samples(y, sample_rate, samples_prefix, samples):
 # driver
 def main():
     # wav file path
-    f = '..\..\WINDY CITY LET ME RIDE.wav'
+    f = '..\\02 - 21St Century - The Way We Were 2.wav'
     # loading audio
     y, sample_rate = lb.load(f, sr=sr, offset=0.0, duration=30.0)
+    #y = lb.effects.harmonic(y)
     # get spetrogram
     cqt = np.abs(lb.core.cqt(y, sr=sample_rate, fmin=lb.note_to_hz('F2'),
                              n_bins=48, hop_length=hp_len, norm=2, real=False))
