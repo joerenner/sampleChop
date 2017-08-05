@@ -16,6 +16,7 @@ def getData(cqt):
 
 # function to clean up times: aggregate chops that are close to eachother, return highest probability chops
 # input: list of positive times, probability of these times, number of final chops to send
+# output: list of cleaned tuples (time, probability)
 def clean_times(times, prob, num):
     new_times = []
     new_prob = []
@@ -49,11 +50,13 @@ def clean_times(times, prob, num):
         return new_times_probs[0:num-1]
 
 # greedy algorithm. Selects samples that maximize probability and diversity function
-# input: cqt (used for diversity function), sample times and probabilities, number of samples wanted, lambda trade-off
+# input: cqt (used for diversity function), sample times and probabilities, number of samples wanted
 # output: final set of  chop frames
 def max_avg_diversity(cqt, frames_prob, n, lamb):
     if len(frames_prob) <= n:
         return [i[0] for i in frames_prob]
+    if lamb < 0.0 or lamb > 1.0:
+        lamb = 0.9
     H, P = lb.decompose.hpss(cqt)
     distances = make_dist_dict(H, frames_prob)
     prob = [i[1] for i in frames_prob]
@@ -104,21 +107,30 @@ def diversity(dist, cand_frame, F):
             total_distance += dist[str(cand_frame)][str(sample)]
     return total_distance / float(len(F))
 
+
+
 class Sample(object):
 
-    def __init__(self, file_name, offset=0.0, duration=None, sr=44100, hp_len=256):
+    # input: path to wav file, offset (where to start chopping in seconds), how long to mine chops (in seconds)
+    # sample rate, hop length, whether to only consider harmonic aspects of wav (will get rid of drums while chopping
+    # resulting chops will be without drums or other percussive elements), the lowest frequency (note in MIDI form) to
+    # consider while chopping
+    def __init__(self, file_name, offset=0.0, duration=None, sr=44100, hp_len=256, harmonic = False, start_note = 'F2'):
         self.file_name = file_name
         self.sr = sr
         self.hp_len = hp_len
         y, sample_rate = lb.load(self.file_name, sr=self.sr, offset=offset, duration=duration)
-        self.y = y
-        self.cqt = np.abs(lb.core.cqt(y, sr=sample_rate, fmin=lb.note_to_hz('F2'),
+        if harmonic:
+            self.y = lb.effects.harmonic(y)
+        else:
+            self.y = y
+        self.cqt = np.abs(lb.core.cqt(y, sr=sample_rate, fmin=lb.note_to_hz(start_note),
                              n_bins=48, hop_length=self.hp_len, norm=2, real=False))
 
     # function that uses neural network to classify frames
     # input: cqt data
     # output: chop times and probabilities
-    def classify(self, num = 15):
+    def classify(self, num = 15, lamb = 0.9):
         clf = joblib.load("..\sampleChop\\nn32_16_8_4.pkl")
         datagen = getData(self.cqt)
         times = []
@@ -134,7 +146,7 @@ class Sample(object):
         # arrange frames with probabilities in chronological order
         frames_prob = sorted(zip(frames, [i[1] for i in time_probs]), key=lambda pair: pair[0])
         # run greedy diversification algorithm to get chop frames
-        self.final_frames = sorted(max_avg_diversity(self.cqt, frames_prob, num, lamb=0.7))
+        self.final_frames = sorted(max_avg_diversity(self.cqt, frames_prob, num, lamb))
 
     # function that uses final sample indices of the chops to cut and rewrite audio into several chops
     # input: y, sample rate, prefix of new samples, sample indices
@@ -148,10 +160,10 @@ class Sample(object):
         lb.output.write_wav(samples_prefix + str(len(samples) + 1) + ".wav", self.y[samples[len(samples) - 1]:],
                             sr=self.sr)
 
-# driver
+# driver/example
 def main():
-    samp = Sample(file_name="../02 - 21St Century - The Way We Were 2.wav")
-    samp.classify(10)
+    samp = Sample(file_name="../Hear_Me.wav", offset=0.0, duration=None, harmonic=True, start_note='F4')
+    samp.classify(15, lamb = 0.95)
     samp.write_samples()
 
 
