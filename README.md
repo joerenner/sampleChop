@@ -4,7 +4,7 @@ This python project uses a trained neural network to divide samples for the purp
 
 Process:
 
-I framed the problem as a binary classification sample: For each frame of an audio file, it would be positive if it was a good break point for a chop, and negative otherwise.
+I framed the problem as a binary classification sample: For each frame of an audio file, it would be positive if it was a good break point for a chop (chop: point in the song in which to break the original audio file), and negative otherwise.
 I spent a large amount of time chopping samples by hand and recording where in a wav file I chopped.
 Then, I created a script to turn the raw data (audio file, text file with times) into data features and labels.
 This was done by first taking the constant q transform aka cqt (https://en.wikipedia.org/wiki/Constant-Q_transform) and generating the tonnetz data (https://en.wikipedia.org/wiki/Tonnetz , for more harmonic components), and then having each frame be accompanied by the previous thirty frames and following thirty frames (for context).
