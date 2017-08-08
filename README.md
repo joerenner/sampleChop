@@ -23,6 +23,7 @@ Finally, I added some post filtering on the results of the neural network:
 - applied greedy diversification algorithm: see below
 
 Greedy Diversification Algorithm: Maximal Average Diversification
+
 Once the neural network results have been cleaned, we end of with N candidates for breaking the wav file into smaller chops.
 Since many songs have repetitive parts in them (chords, progressions, notes, etc), a lot of the final chops can be very similar if only judging on the probability. This can lead to the system generating 5 chops that basically sound the same and offer little variation for the artist to play with. Thus, we want diverse chops. I achieve this by introducing a greedy algorithm based on an objective I named Maximal Average Diversification, which is a small variation on Max-Sum Diversification (https://arxiv.org/pdf/1203.6397.pdf), an objective used for adding diversification to recommendations.
 
@@ -30,7 +31,7 @@ Basically, what Max-Sum Diversification and Maximal Average Diversification (M.A
 
 The way the algorithm works is it takes the cleaned frames from the output of the neural network (we will call them the Candidate set, or C) and then greedily selects frames from the set that maximize the M.A.D. objective and adds them to the final set of chops, which we will call the F set. The objective has two parts: the relevance expression and the diversity expression, with a hyperparameter lambda that controls the trade-off between the two. The relevance expression is simply the probability output from the network. The diversity expression is calculated as follows:
    - first, the spectrogram is converted to only its harmonic components, meaning no drums or other percussive elements
-   - next, the euclidean distance is taken from the harmonic spectrogram of the candidate frame to every frame in F and averaged. This measures how different the candidate frame is to each of the frames that have already been selected into F.
+   - next, the euclidean distance is taken from the harmonic spectrogram of the candidate frame to every frame in F and averaged. This measures how different the candidate frame is to each of the frames that have already been selected into F, based on the amplitudes of the frequencies in the harmonic spectrogram.
 One candidate from is selected at each iteration and added to F, until there are enough chops in F to return them as the final set.
 
 Once the final set is obtained, the original audio file is split at each frame number, and the resulting chops are written to wav files, ready to program into an MPC.
@@ -42,5 +43,7 @@ Files:
 - classify : file that takes new audio file, generated features, classifies its' frames, filters the positive samples, applies diversification, breaks the audio file on these final positive chops, then writes the new broken up samples to wav files. 
 
 Future work: 
+- documentation
+- tests
 - Create website for this using classify.py as backend. Possibly using Django framework
 - Find way to use with mp3s and not just wav audio files
