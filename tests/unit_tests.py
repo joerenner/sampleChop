@@ -5,8 +5,9 @@ from sampleChop.sampleChop import classify
 import numpy as np
 from math import ceil
 
-class TestSampleClass(unittest.TestCase):
+class TestSampleInit(unittest.TestCase):
 
+    # tests initial cqt generation options
     def test_cqt(self):
         # regular transform
         test_song = classify.Sample(file_name="../../Hear_Me.wav")
@@ -25,12 +26,32 @@ class TestSampleClass(unittest.TestCase):
         test_song = classify.Sample(file_name="../../Hear_Me.wav", duration=40.0)
         self.assertTupleEqual(np.shape(test_song.cqt), normal_shape)
 
+
+class TestClassification(unittest.TestCase):
+
+    def setUp(self):
+        self.sample = classify.Sample(file_name="../../Hear_Me.wav", duration=10.0)
+
+    # testing data generator function
+    def test_getData(self):
+        datagen = list(classify.getData(self.sample.cqt))
+        self.assertEqual(len(datagen),1663)    # list of tuples is sufficiently long (for specific test song)
+        self.assertGreater(datagen[1][0], datagen[0][0])            # indicies are sequential
+        for i in xrange(len(datagen)):
+            self.assertTupleEqual(np.shape(datagen[i][1]), (61,))   # shape of datapoint is correct
+            self.assertFalse(np.isnan(datagen[i][1]).any())         # no nans in data point
+            if i != 0:
+                self.assertGreater(datagen[i][0], datagen[i - 1][0])    # indicies are sequential
+
+
+
 if __name__ == '__main__':
     # initialize the test suite
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     # add tests to the test suite
-    suite.addTests(loader.loadTestsFromTestCase(TestSampleClass))
+    #suite.addTests(loader.loadTestsFromTestCase(TestSampleInit))
+    suite.addTests(loader.loadTestsFromTestCase(TestClassification))
     # initialize a runner, pass it your suite and run it
     runner = unittest.TextTestRunner(verbosity=3)
     result = runner.run(suite)

@@ -2,10 +2,10 @@ import librosa as lb
 import numpy as np
 from sklearn.externals import joblib
 from scipy.spatial.distance import euclidean
-from math import isnan
 
 # generator used to classify frames
 # input: cqt transform
+# yields tuples (index, example data point)
 def getData(cqt):
     for i in range(30,(cqt.shape[1])-30):
         pt = cqt[:,(i-30):(i+31):1]
