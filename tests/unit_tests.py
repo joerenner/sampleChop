@@ -4,6 +4,8 @@ import unittest
 from sampleChop.sampleChop import classify
 import numpy as np
 from math import ceil
+from sklearn.externals import joblib
+import librosa as lb
 
 class TestSampleInit(unittest.TestCase):
 
@@ -43,6 +45,14 @@ class TestClassification(unittest.TestCase):
             if i != 0:
                 self.assertGreater(datagen[i][0], datagen[i - 1][0])    # indicies are sequential
 
+    # testing time classifications and cleaning
+    def test_classification(self):
+        self.sample.classify()
+        total_frames = ceil(10.0 * self.sample.sr / self.sample.hp_len)
+        for i in xrange(len(self.sample.final_frames)):
+            self.assertLess(self.sample.final_frames[i], total_frames)
+            if i > 0:
+                self.assertGreater(self.sample.final_frames[i],self.sample.final_frames[i-1])
 
 
 if __name__ == '__main__':
@@ -50,7 +60,7 @@ if __name__ == '__main__':
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     # add tests to the test suite
-    #suite.addTests(loader.loadTestsFromTestCase(TestSampleInit))
+    suite.addTests(loader.loadTestsFromTestCase(TestSampleInit))
     suite.addTests(loader.loadTestsFromTestCase(TestClassification))
     # initialize a runner, pass it your suite and run it
     runner = unittest.TextTestRunner(verbosity=3)

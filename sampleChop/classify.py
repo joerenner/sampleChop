@@ -51,7 +51,7 @@ def clean_times(times, prob, num):
 
 # greedy algorithm. Selects samples that maximize probability and diversity function
 # input: cqt (used for diversity function), sample times and probabilities, number of samples wanted
-# output: final set of  chop frames
+# output: final set of chop frames
 def max_avg_diversity(cqt, frames_prob, n, lamb):
     if len(frames_prob) <= n:
         return [i[0] for i in frames_prob]
