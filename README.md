@@ -2,6 +2,12 @@
 
 This python project uses a trained neural network to divide samples for the purpose of chopping https://en.wikipedia.org/wiki/Chopping_(sampling_technique) for the aide of hip hop production. 
 
+Files:
+- get_data : script to process raw data into data points
+- dataOps : script that reprocesses data from a lot of little files into a few large files (made training easier)
+- sampleChop : file that loads data (in batches: over 400,000 data points), trains and saves the network, and performs on a validation audio file
+- classify : file that takes new audio file, generated features, classifies its' frames, filters the positive samples, applies diversification, breaks the audio file on these final positive chops, then writes the new broken up samples to wav files. 
+
 Process:
 
 I framed the problem as a binary classification sample: For each frame of an audio file, it would be positive if it was a good break point for a chop (chop: point in the song in which to break the original audio file), and negative otherwise.
@@ -35,12 +41,6 @@ The way the algorithm works is it takes the cleaned frames from the output of th
 One candidate from is selected at each iteration and added to F, until there are enough chops in F to return them as the final set.
 
 Once the final set is obtained, the original audio file is split at each frame number, and the resulting chops are written to wav files, ready to program into an MPC.
-
-Files:
-- get_data : script to process raw data into data points
-- dataOps : script that reprocesses data from a lot of little files into a few large files (made training easier)
-- sampleChop : file that loads data (in batches: over 400,000 data points), trains and saves the network, and performs on a validation audio file
-- classify : file that takes new audio file, generated features, classifies its' frames, filters the positive samples, applies diversification, breaks the audio file on these final positive chops, then writes the new broken up samples to wav files. 
 
 Future work: 
 - documentation
