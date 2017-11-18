@@ -125,7 +125,7 @@ class Sample(object):
         else:
             self.y = y
         self.cqt = np.abs(lb.core.cqt(y, sr=sample_rate, fmin=lb.note_to_hz(start_note),
-                             n_bins=48, hop_length=self.hp_len, norm=2, real=False))
+                             n_bins=48, hop_length=self.hp_len, norm=2))
 
     # function that uses neural network to classify frames
     # input: cqt data
