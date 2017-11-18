@@ -1,6 +1,7 @@
 # sampleChop
 
 This python project uses a trained neural network to divide samples for the purpose of chopping https://en.wikipedia.org/wiki/Chopping_(sampling_technique) for the aide of hip hop production. 
+Python 2.7, librosa 0.5.1, scikit-learn 0.19.1, numpy 1.13.3, scipy 1.0.0
 
 Files:
 - get_data : script to process raw data into data points
@@ -42,8 +43,4 @@ One candidate from is selected at each iteration and added to F, until there are
 
 Once the final set is obtained, the original audio file is split at each frame number, and the resulting chops are written to wav files, ready to program into an MPC.
 
-Future work: 
-- documentation
-- tests
-- Create website for this using classify.py as backend. Possibly using Django framework
-- Find way to use with mp3s and not just wav audio files
+
